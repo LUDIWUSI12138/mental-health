@@ -1,0 +1,10 @@
+.git/
+.idea/
+.vscode/
+target/
+*.iml
+*.log
+database.sql
+database_postgres.sql
+update_tables.sql
+render.yaml
