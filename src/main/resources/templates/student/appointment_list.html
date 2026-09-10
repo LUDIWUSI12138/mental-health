@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>咨询预约 - 心理健康测评系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #0e0e1a; min-height: 100vh; overflow-x: hidden; color: #e0e0e0; }
+        .bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .navbar { background: rgba(20,20,35,0.85); backdrop-filter: blur(20px); padding: 0 30px; height: 64px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .navbar .brand { font-size: 17px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .navbar .brand .icon { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 14px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: #fff; background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)); }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+        .page-header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; }
+        .page-header .left { }
+        .page-header .deco-line { width: 60px; height: 3px; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 2px; margin-bottom: 16px; }
+        .page-header h2 { font-size: 32px; color: #fff; font-weight: 300; letter-spacing: 4px; }
+        .page-header p { color: rgba(255,255,255,0.4); margin-top: 8px; font-size: 14px; }
+        .btn-add { padding: 12px 28px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; transition: all 0.3s; font-weight: 600; letter-spacing: 1px; }
+        .btn-add:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(102,126,234,0.4); }
+
+        .appointment-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px 32px; margin-bottom: 16px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; }
+        .appointment-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 2px; }
+        .appointment-card.status-pending::before { background: linear-gradient(180deg, #f6d365, #fda085); }
+        .appointment-card.status-approved::before { background: linear-gradient(180deg, #43e97b, #38f9d7); }
+        .appointment-card.status-rejected::before { background: linear-gradient(180deg, #f5576c, #ff6b6b); }
+        .appointment-card.status-completed::before { background: linear-gradient(180deg, #667eea, #764ba2); }
+        .appointment-card:hover { border-color: rgba(102,126,234,0.3); transform: translateX(6px); box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+
+        .appt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .appt-header .counselor { font-size: 17px; font-weight: 500; color: #fff; }
+        .appt-status { padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 1px; }
+        .appt-status.pending { background: rgba(246,211,101,0.12); color: #f6d365; border: 1px solid rgba(246,211,101,0.2); }
+        .appt-status.approved { background: rgba(67,233,123,0.12); color: #43e97b; border: 1px solid rgba(67,233,123,0.2); }
+        .appt-status.rejected { background: rgba(245,87,108,0.12); color: #f5576c; border: 1px solid rgba(245,87,108,0.2); }
+        .appt-status.completed { background: rgba(102,126,234,0.12); color: #667eea; border: 1px solid rgba(102,126,234,0.2); }
+
+        .appt-info { display: flex; gap: 20px; margin-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.4); }
+        .appt-info span { display: flex; align-items: center; gap: 6px; }
+        .appt-reason { font-size: 14px; color: rgba(255,255,255,0.45); line-height: 1.7; margin-top: 4px; }
+        .appt-reply { margin-top: 12px; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+        .appt-reply strong { color: #667eea; }
+
+        .empty { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.3); }
+        .empty .icon { font-size: 60px; margin-bottom: 20px; opacity: 0.3; }
+
+        /* 弹窗 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: rgba(30,30,50,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; width: 90%; max-width: 500px; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .modal h3 { font-size: 22px; color: #fff; margin-bottom: 24px; font-weight: 500; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 14px; font-family: inherit; background: rgba(255,255,255,0.04); color: #e0e0e0; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: rgba(102,126,234,0.5); }
+        .form-group textarea { height: 80px; resize: none; }
+        .form-group select option { background: #1e1e32; color: #e0e0e0; }
+        .btn-row { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+        .btn-cancel { padding: 10px 24px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .btn-cancel:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
+        .btn-save { padding: 10px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .btn-save:hover { box-shadow: 0 4px 20px rgba(102,126,234,0.4); }
+
+        .card-enter { opacity: 0; transform: translateY(30px); }
+        .card-enter.visible { animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* 用户下拉菜单 */
+        .user-menu { position: relative; }
+        .user-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .user-trigger:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); }
+        .user-trigger .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 600; }
+        .user-trigger .name { font-size: 14px; color: rgba(255,255,255,0.8); }
+        .user-trigger .arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+        .user-menu.open .arrow { transform: rotate(180deg); }
+        .user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: rgba(30,30,50,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .user-menu.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .user-dropdown a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 10px; font-size: 14px; transition: all 0.2s; }
+        .user-dropdown a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .user-dropdown a .icon { font-size: 16px; width: 20px; text-align: center; }
+        .user-dropdown .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 12px; }
+        .user-dropdown a.logout { color: #f5576c; }
+        .user-dropdown a.logout:hover { background: rgba(245,87,108,0.1); color: #f5576c; }
+    </style>
+</head>
+<body>
+    <canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+    <nav class="navbar">
+        <div class="brand"><div class="icon">&#129504;</div>心理健康测评系统</div>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">首页</a>
+            <a th:href="@{/student/questionnaire/list}">测评中心</a>
+            <a th:href="@{/student/assessment/history}">测评记录</a>
+            <a th:href="@{/student/article/list}">知识园地</a>
+            <a th:href="@{/student/mood/list}">心情日记</a>
+            <a th:href="@{/student/appointment/list}" class="active">咨询预约</a>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <div class="user-trigger" onclick="toggleUserMenu()">
+                <div class="avatar" th:text="${session.user?.realName != null ? #strings.substring(session.user.realName, 0, 1) : '同'}">张</div>
+                <span class="name" th:text="${session.user?.realName ?: '同学'}">同学</span>
+                <span class="arrow">&#9662;</span>
+            </div>
+            <div class="user-dropdown">
+                <a th:href="@{/student/profile}"><span class="icon">&#9881;</span> 个人中心</a>
+                <div class="divider"></div>
+                <a th:href="@{/user/logout}" class="logout"><span class="icon">&#8592;</span> 退出登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="left">
+                <div class="deco-line"></div>
+                <h2>咨 询 预 约</h2>
+                <p>在线预约心理咨询师，守护心理健康</p>
+            </div>
+            <button class="btn-add" onclick="showModal()">+ 新建预约</button>
+        </div>
+
+        <div th:if="${#lists.isEmpty(appointments)}" class="empty">
+            <div class="icon">&#128196;</div>
+            <p>还没有预约记录</p>
+        </div>
+
+        <div th:each="a, iter : ${appointments}" th:class="'appointment-card card-enter status-' + ${a.status}" th:attr="data-delay=${iter.index * 100}">
+            <div class="appt-header">
+                <span class="counselor" th:text="'咨询师: ' + ${a.counselorName}">咨询师</span>
+                <span th:class="'appt-status ' + ${a.status}"
+                      th:text="${a.status == 'pending' ? '待确认' : (a.status == 'approved' ? '已确认' : (a.status == 'rejected' ? '已拒绝' : '已完成'))}">状态</span>
+            </div>
+            <div class="appt-info">
+                <span>&#128197; <span th:text="${#dates.format(a.appointmentDate, 'yyyy-MM-dd')}">日期</span></span>
+                <span>&#128336; <span th:text="${a.appointmentTime}">时段</span></span>
+                <span>&#128197; <span th:text="${#dates.format(a.createTime, 'MM-dd HH:mm')}">申请时间</span></span>
+            </div>
+            <div class="appt-reason" th:if="${a.reason != null}" th:text="'咨询原因: ' + ${a.reason}">原因</div>
+            <div class="appt-reply" th:if="${a.adminReply != null}">
+                <strong>管理员回复: </strong><span th:text="${a.adminReply}">回复内容</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预约弹窗 -->
+    <div class="modal-overlay" id="apptModal">
+        <div class="modal">
+            <h3>预约心理咨询</h3>
+            <div class="form-group">
+                <label>咨询师</label>
+                <select id="counselorName">
+                    <option value="李老师">李老师 - 情绪与压力咨询</option>
+                    <option value="王老师">王老师 - 人际关系咨询</option>
+                    <option value="张老师">张老师 - 学业与职业规划</option>
+                    <option value="陈老师">陈老师 - 恋爱与家庭关系</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>预约日期</label>
+                <input type="date" id="apptDate">
+            </div>
+            <div class="form-group">
+                <label>预约时段</label>
+                <select id="apptTime">
+                    <option value="09:00-10:00">09:00 - 10:00</option>
+                    <option value="10:00-11:00">10:00 - 11:00</option>
+                    <option value="14:00-15:00">14:00 - 15:00</option>
+                    <option value="15:00-16:00">15:00 - 16:00</option>
+                    <option value="16:00-17:00">16:00 - 17:00</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>咨询原因（选填）</label>
+                <textarea id="apptReason" placeholder="简述您想咨询的问题..."></textarea>
+            </div>
+            <div class="btn-row">
+                <button class="btn-cancel" onclick="hideModal()">取消</button>
+                <button class="btn-save" onclick="saveAppt()">提交预约</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d'),W,H;
+        function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+        resize();window.addEventListener('resize',resize);
+
+        var strokes=[];
+        function Stroke(){this.points=[];var sx=Math.random()*W,sy=Math.random()*H;for(var i=0;i<6;i++)this.points.push({x:sx+(Math.random()-0.5)*400,y:sy+(Math.random()-0.5)*400});this.progress=Math.random();this.speed=0.0003+Math.random()*0.0004;this.maxOpacity=0.08+Math.random()*0.07;this.opacity=0;this.width=0.8+Math.random()*0.8;}
+        for(var i=0;i<5;i++)strokes.push(new Stroke());
+
+        var rings=[];
+        rings.push({x:W*0.15,y:H*0.3,r:100,a:0,s:0.002,o:0.08});
+        rings.push({x:W*0.85,y:H*0.7,r:130,a:Math.PI,s:0.003,o:0.07});
+
+        var dots=[];for(var i=0;i<30;i++)dots.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+0.5,vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,o:Math.random()*0.4+0.1});
+
+        function drawBg(){ctx.clearRect(0,0,W,H);
+            strokes.forEach(function(s){s.progress+=s.speed;if(s.progress>1){s.progress=0;var sx=Math.random()*W,sy=Math.random()*H;s.points=[];for(var i=0;i<6;i++)s.points.push({x:sx+(Math.random()-0.5)*400,y:sy+(Math.random()-0.5)*400});}var p=s.progress;var fade=p<0.2?p/0.2:(p>0.8?(1-p)/0.2:1);s.opacity=s.maxOpacity*fade;ctx.beginPath();ctx.moveTo(s.points[0].x,s.points[0].y);for(var i=1;i<s.points.length-1;i++){var xc=(s.points[i].x+s.points[i+1].x)/2,yc=(s.points[i].y+s.points[i+1].y)/2;ctx.quadraticCurveTo(s.points[i].x,s.points[i].y,xc,yc);}ctx.strokeStyle='rgba(180,190,255,'+s.opacity+')';ctx.lineWidth=s.width;ctx.stroke();});
+            rings.forEach(function(r){r.a+=r.s;ctx.save();ctx.translate(r.x,r.y);ctx.rotate(r.a);ctx.beginPath();ctx.arc(0,0,r.r,0,Math.PI*1.5);ctx.strokeStyle='rgba(180,160,255,'+r.o+')';ctx.lineWidth=1.2;ctx.stroke();ctx.beginPath();ctx.arc(0,0,r.r*0.6,Math.PI*0.5,Math.PI*2);ctx.strokeStyle='rgba(150,180,255,'+(r.o*0.8)+')';ctx.lineWidth=0.8;ctx.stroke();ctx.restore();});
+            dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(220,225,255,'+d.o+')';ctx.fill();});
+            for(var i=0;i<dots.length;i++)for(var j=i+1;j<dots.length;j++){var dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle='rgba(150,170,255,'+(0.08*(1-dist/100))+')';ctx.lineWidth=0.4;ctx.stroke();}}
+            requestAnimationFrame(drawBg);}
+        drawBg();
+
+        document.querySelectorAll('.card-enter').forEach(function(c){
+            var delay=parseInt(c.getAttribute('data-delay'))||0;
+            setTimeout(function(){c.classList.add('visible');},300+delay);
+        });
+
+        // 用户菜单
+        window.toggleUserMenu=function(){document.getElementById('userMenu').classList.toggle('open');};
+        document.addEventListener('click',function(e){if(!document.getElementById('userMenu').contains(e.target))document.getElementById('userMenu').classList.remove('open');});
+    })();
+
+    function showModal() { document.getElementById('apptModal').classList.add('show'); }
+    function hideModal() { document.getElementById('apptModal').classList.remove('show'); }
+
+    function saveAppt() {
+        var counselor = document.getElementById('counselorName').value;
+        var date = document.getElementById('apptDate').value;
+        var time = document.getElementById('apptTime').value;
+        var reason = document.getElementById('apptReason').value;
+        if (!date) { alert('请选择预约日期'); return; }
+        fetch('/student/appointment/save', {
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'},
+            body: 'counselorName=' + encodeURIComponent(counselor) + '&appointmentDate=' + date + '&appointmentTime=' + encodeURIComponent(time) + '&reason=' + encodeURIComponent(reason)
+        }).then(function(r){return r.json();}).then(function(d){
+            if (d.success) { location.reload(); } else { alert(d.error || '预约失败'); }
+        });
+    }
+    </script>
+</body>
+</html>

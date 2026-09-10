@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑文章 - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a1a2e; padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .brand { color: white; font-size: 18px; font-weight: bold; }
+        .navbar a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 14px; }
+        .container { max-width: 700px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 16px; padding: 35px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .card h2 { font-size: 22px; color: #333; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 2px solid #eee; border-radius: 10px; font-size: 14px; font-family: inherit; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .form-group textarea { height: 200px; resize: vertical; }
+        .btn-row { display: flex; gap: 10px; }
+        .btn-save { padding: 12px 30px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+        .btn-back { padding: 12px 30px; background: #f0f0f0; color: #666; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <span class="brand">&#129504; 管理后台</span>
+        <div><a th:href="@{/user/logout}">退出</a></div>
+    </nav>
+    <div class="container">
+        <div class="card">
+            <h2 th:text="${article.id != null} ? '编辑文章' : '新增文章'">文章编辑</h2>
+            <form th:action="@{/admin/article/save}" method="post">
+                <input type="hidden" name="id" th:value="${article.id}">
+                <div class="form-group">
+                    <label>标题</label>
+                    <input type="text" name="title" th:value="${article.title}" required placeholder="请输入文章标题">
+                </div>
+                <div class="form-group">
+                    <label>摘要</label>
+                    <input type="text" name="summary" th:value="${article.summary}" placeholder="简短描述文章内容">
+                </div>
+                <div class="form-group">
+                    <label>分类</label>
+                    <select name="category">
+                        <option value="情绪管理" th:selected="${article.category == '情绪管理'}">情绪管理</option>
+                        <option value="压力应对" th:selected="${article.category == '压力应对'}">压力应对</option>
+                        <option value="人际关系" th:selected="${article.category == '人际关系'}">人际关系</option>
+                        <option value="自我认知" th:selected="${article.category == '自我认知'}">自我认知</option>
+                        <option value="睡眠健康" th:selected="${article.category == '睡眠健康'}">睡眠健康</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>内容</label>
+                    <textarea name="content" required placeholder="请输入文章内容" th:text="${article.content}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>状态</label>
+                    <select name="status">
+                        <option value="1" th:selected="${article.status == null || article.status == 1}">上架</option>
+                        <option value="0" th:selected="${article.status == 0}">下架</option>
+                    </select>
+                </div>
+                <div class="btn-row">
+                    <button type="submit" class="btn-save">保存</button>
+                    <a th:href="@{/admin/article/list}" class="btn-back">返回</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 心理健康测评系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #0e0e1a; min-height: 100vh; overflow-x: hidden; color: #e0e0e0; }
+        .bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .navbar { background: rgba(20,20,35,0.85); backdrop-filter: blur(20px); padding: 0 30px; height: 64px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .navbar .brand { font-size: 17px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .navbar .brand .icon { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 14px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+        .container { max-width: 700px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+
+        .profile-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; overflow: hidden; }
+        .profile-header { background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)); padding: 45px; text-align: center; position: relative; overflow: hidden; }
+        .profile-header::before { content: ''; position: absolute; top: -50%; right: -20%; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, rgba(102,126,234,0.15) 0%, transparent 70%); }
+        .profile-header .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 16px; border: 3px solid rgba(255,255,255,0.2); position: relative; z-index: 1; }
+        .profile-header h2 { font-size: 22px; margin-bottom: 4px; position: relative; z-index: 1; }
+        .profile-header p { opacity: 0.6; font-size: 14px; position: relative; z-index: 1; }
+
+        .profile-body { padding: 40px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 14px; background: rgba(255,255,255,0.04); color: #e0e0e0; transition: all 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: rgba(102,126,234,0.5); background: rgba(255,255,255,0.06); }
+        .form-group select option { background: #1e1e32; color: #e0e0e0; }
+        .btn-save { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: 600; transition: all 0.3s; margin-top: 10px; letter-spacing: 2px; }
+        .btn-save:hover { box-shadow: 0 8px 30px rgba(102,126,234,0.4); transform: translateY(-2px); }
+        .btn-save:active { transform: translateY(0); }
+
+        .msg { text-align: center; padding: 12px; margin-bottom: 16px; border-radius: 10px; font-size: 14px; display: none; }
+        .msg.success { display: block; background: rgba(67,233,123,0.12); color: #43e97b; border: 1px solid rgba(67,233,123,0.2); }
+        .msg.error { display: block; background: rgba(245,87,108,0.12); color: #f5576c; border: 1px solid rgba(245,87,108,0.2); }
+
+        .card-enter { opacity: 0; transform: translateY(30px); }
+        .card-enter.visible { animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* 用户下拉菜单 */
+        .user-menu { position: relative; }
+        .user-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .user-trigger:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); }
+        .user-trigger .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 600; }
+        .user-trigger .name { font-size: 14px; color: rgba(255,255,255,0.8); }
+        .user-trigger .arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+        .user-menu.open .arrow { transform: rotate(180deg); }
+        .user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: rgba(30,30,50,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .user-menu.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .user-dropdown a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 10px; font-size: 14px; transition: all 0.2s; }
+        .user-dropdown a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .user-dropdown a .icon { font-size: 16px; width: 20px; text-align: center; }
+        .user-dropdown .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 12px; }
+        .user-dropdown a.logout { color: #f5576c; }
+        .user-dropdown a.logout:hover { background: rgba(245,87,108,0.1); color: #f5576c; }
+    </style>
+</head>
+<body>
+    <canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+    <nav class="navbar">
+        <div class="brand"><div class="icon">&#129504;</div>心理健康测评系统</div>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">首页</a>
+            <a th:href="@{/student/questionnaire/list}">测评中心</a>
+            <a th:href="@{/student/assessment/history}">测评记录</a>
+            <a th:href="@{/student/article/list}">知识园地</a>
+            <a th:href="@{/student/mood/list}">心情日记</a>
+            <a th:href="@{/student/appointment/list}">咨询预约</a>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <div class="user-trigger" onclick="toggleUserMenu()">
+                <div class="avatar" th:text="${#strings.substring(user.realName, 0, 1)}">张</div>
+                <span class="name" th:text="${user.realName}">同学</span>
+                <span class="arrow">&#9662;</span>
+            </div>
+            <div class="user-dropdown">
+                <a th:href="@{/student/profile}"><span class="icon">&#9881;</span> 个人中心</a>
+                <div class="divider"></div>
+                <a th:href="@{/user/logout}" class="logout"><span class="icon">&#8592;</span> 退出登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="profile-card card-enter">
+            <div class="profile-header">
+                <div class="avatar" th:text="${#strings.substring(user.realName, 0, 1)}">张</div>
+                <h2 th:text="${user.realName}">姓名</h2>
+                <p th:text="'学号: ' + ${user.username}">学号</p>
+            </div>
+            <div class="profile-body">
+                <div id="msgBox" class="msg"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>姓名</label>
+                        <input type="text" id="realName" th:value="${user.realName}">
+                    </div>
+                    <div class="form-group">
+                        <label>性别</label>
+                        <select id="gender">
+                            <option value="男" th:selected="${user.gender == '男'}">男</option>
+                            <option value="女" th:selected="${user.gender == '女'}">女</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>年龄</label>
+                        <input type="number" id="age" th:value="${user.age}">
+                    </div>
+                    <div class="form-group">
+                        <label>学院</label>
+                        <input type="text" id="college" th:value="${user.college}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>专业</label>
+                        <input type="text" id="major" th:value="${user.major}">
+                    </div>
+                    <div class="form-group">
+                        <label>手机号</label>
+                        <input type="text" id="phone" th:value="${user.phone}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="email" th:value="${user.email}">
+                </div>
+                <button class="btn-save" onclick="saveProfile()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d'),W,H;
+        function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+        resize();window.addEventListener('resize',resize);
+
+        var dots=[];for(var i=0;i<25;i++)dots.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+0.5,vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,o:Math.random()*0.4+0.1});
+        function drawBg(){ctx.clearRect(0,0,W,H);dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(220,225,255,'+d.o+')';ctx.fill();});for(var i=0;i<dots.length;i++)for(var j=i+1;j<dots.length;j++){var dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle='rgba(150,170,255,'+(0.08*(1-dist/100))+')';ctx.lineWidth=0.4;ctx.stroke();}}requestAnimationFrame(drawBg);}
+        drawBg();
+
+        setTimeout(function(){document.querySelector('.card-enter').classList.add('visible');},200);
+
+        // 用户菜单
+        window.toggleUserMenu=function(){document.getElementById('userMenu').classList.toggle('open');};
+        document.addEventListener('click',function(e){if(!document.getElementById('userMenu').contains(e.target))document.getElementById('userMenu').classList.remove('open');});
+    })();
+
+    function saveProfile() {
+        var data = 'realName=' + encodeURIComponent(document.getElementById('realName').value) +
+            '&gender=' + encodeURIComponent(document.getElementById('gender').value) +
+            '&age=' + document.getElementById('age').value +
+            '&college=' + encodeURIComponent(document.getElementById('college').value) +
+            '&major=' + encodeURIComponent(document.getElementById('major').value) +
+            '&phone=' + encodeURIComponent(document.getElementById('phone').value) +
+            '&email=' + encodeURIComponent(document.getElementById('email').value);
+        fetch('/student/profile/update', {
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'},
+            body: data
+        }).then(function(r){return r.json();}).then(function(d){
+            var msg = document.getElementById('msgBox');
+            if (d.success) { msg.className = 'msg success'; msg.textContent = '保存成功！'; setTimeout(function(){location.reload();}, 1000); }
+            else { msg.className = 'msg error'; msg.textContent = d.error || '保存失败'; }
+        });
+    }
+    </script>
+</body>
+</html>

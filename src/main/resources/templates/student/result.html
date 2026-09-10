@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测评结果 - 心理健康测评系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #0e0e1a; min-height: 100vh; overflow-x: hidden; color: #e0e0e0; }
+        .bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .navbar { background: rgba(20,20,35,0.85); backdrop-filter: blur(20px); padding: 0 30px; height: 64px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .navbar .brand { font-size: 17px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .navbar .brand .icon { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 14px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+        .container { max-width: 700px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+
+        /* 结果概览 */
+        .result-hero { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 45px; text-align: center; margin-bottom: 24px; position: relative; overflow: hidden; }
+        .result-hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(102,126,234,0.08) 0%, transparent 70%); }
+
+        /* 分数圆环 */
+        .score-ring-wrap { width: 200px; height: 200px; margin: 0 auto 30px; position: relative; }
+        .score-ring-bg { position: absolute; inset: 0; border-radius: 50%; border: 4px solid rgba(255,255,255,0.06); }
+        .score-ring-fill { position: absolute; inset: 0; }
+        .score-ring-fill svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .score-ring-fill circle { fill: none; stroke-width: 4; stroke-linecap: round; }
+        .ring-track { stroke: rgba(255,255,255,0.06); }
+        .ring-normal { stroke: url(#gradNormal); }
+        .ring-light { stroke: url(#gradLight); }
+        .ring-moderate { stroke: url(#gradModerate); }
+        .ring-severe { stroke: url(#gradSevere); }
+        .score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-num { font-size: 52px; font-weight: bold; color: #fff; }
+        .score-unit { font-size: 16px; color: rgba(255,255,255,0.5); margin-top: -4px; }
+
+        .level-title { font-size: 24px; font-weight: 600; margin-bottom: 16px; }
+        .level-normal { color: #43e97b; }
+        .level-light { color: #f6d365; }
+        .level-moderate { color: #f093fb; }
+        .level-severe { color: #f5576c; }
+        .level-desc { color: rgba(255,255,255,0.4); line-height: 1.9; font-size: 14px; padding: 0 20px; }
+        .info-row { display: flex; gap: 14px; margin: 24px auto; max-width: 400px; }
+        .info-item { flex: 1; background: rgba(255,255,255,0.04); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+        .info-item .label { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; }
+        .info-item .value { font-size: 14px; color: #fff; font-weight: 600; margin-top: 4px; }
+
+        /* 预警横幅 */
+        .warning-banner { background: rgba(245,87,108,0.1); border: 1px solid rgba(245,87,108,0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+        .warning-banner h4 { color: #f5576c; margin-bottom: 8px; font-size: 16px; }
+        .warning-banner p { color: rgba(245,87,108,0.7); font-size: 14px; line-height: 1.7; }
+
+        /* 分析卡片 */
+        .analysis-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 30px; margin-bottom: 24px; }
+        .analysis-card h3 { font-size: 17px; color: #fff; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); font-weight: 500; }
+        .score-bar-item { margin-bottom: 20px; }
+        .score-bar-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .score-bar-label span:first-child { color: rgba(255,255,255,0.6); }
+        .score-bar-label span:last-child { color: rgba(255,255,255,0.35); }
+        .score-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+        .score-bar-fill { height: 100%; border-radius: 4px; transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .fill-normal { background: linear-gradient(90deg, #43e97b, #38f9d7); }
+        .fill-light { background: linear-gradient(90deg, #f6d365, #fda085); }
+        .fill-moderate { background: linear-gradient(90deg, #f093fb, #f5576c); }
+        .fill-severe { background: linear-gradient(90deg, #f5576c, #ff6b6b); }
+        .legend { display: flex; gap: 20px; margin-top: 20px; font-size: 12px; color: rgba(255,255,255,0.3); }
+        .legend span { display: flex; align-items: center; gap: 6px; }
+        .legend .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* 建议 */
+        .suggestion-list { list-style: none; }
+        .suggestion-list li { padding: 14px 18px; margin-bottom: 10px; background: rgba(255,255,255,0.04); border-radius: 12px; font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.7; border: 1px solid rgba(255,255,255,0.04); transition: all 0.3s; }
+        .suggestion-list li:hover { border-color: rgba(102,126,234,0.2); background: rgba(102,126,234,0.05); }
+        .suggestion-list li::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 12px; vertical-align: middle; }
+        .sug-normal::before { background: #43e97b; }
+        .sug-light::before { background: #f6d365; }
+        .sug-moderate::before { background: #f093fb; }
+        .sug-severe::before { background: #f5576c; }
+
+        .actions { display: flex; gap: 14px; justify-content: center; margin-top: 10px; margin-bottom: 50px; }
+        .btn { padding: 14px 36px; border-radius: 12px; font-size: 15px; text-decoration: none; cursor: pointer; border: none; font-weight: 600; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 20px rgba(102,126,234,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(102,126,234,0.4); }
+        .btn-outline { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-outline:hover { border-color: rgba(102,126,234,0.4); color: #fff; background: rgba(102,126,234,0.1); }
+
+        .card-enter { opacity: 0; transform: translateY(30px); }
+        .card-enter.visible { animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* 用户下拉菜单 */
+        .user-menu { position: relative; }
+        .user-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .user-trigger:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); }
+        .user-trigger .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 600; }
+        .user-trigger .name { font-size: 14px; color: rgba(255,255,255,0.8); }
+        .user-trigger .arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+        .user-menu.open .arrow { transform: rotate(180deg); }
+        .user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: rgba(30,30,50,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .user-menu.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .user-dropdown a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 10px; font-size: 14px; transition: all 0.2s; }
+        .user-dropdown a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .user-dropdown a .icon { font-size: 16px; width: 20px; text-align: center; }
+        .user-dropdown .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 12px; }
+        .user-dropdown a.logout { color: #f5576c; }
+        .user-dropdown a.logout:hover { background: rgba(245,87,108,0.1); color: #f5576c; }
+    </style>
+</head>
+<body>
+    <canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+    <nav class="navbar">
+        <div class="brand"><div class="icon">&#129504;</div>心理健康测评系统</div>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">首页</a>
+            <a th:href="@{/student/assessment/history}">测评记录</a>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <div class="user-trigger" onclick="toggleUserMenu()">
+                <div class="avatar" th:text="${session.user?.realName != null ? #strings.substring(session.user.realName, 0, 1) : '同'}">张</div>
+                <span class="name" th:text="${session.user?.realName ?: '同学'}">同学</span>
+                <span class="arrow">&#9662;</span>
+            </div>
+            <div class="user-dropdown">
+                <a th:href="@{/student/profile}"><span class="icon">&#9881;</span> 个人中心</a>
+                <div class="divider"></div>
+                <a th:href="@{/user/logout}" class="logout"><span class="icon">&#8592;</span> 退出登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="result-hero card-enter">
+            <!-- SVG渐变定义 -->
+            <svg width="0" height="0"><defs>
+                <linearGradient id="gradNormal" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#43e97b"/><stop offset="100%" stop-color="#38f9d7"/></linearGradient>
+                <linearGradient id="gradLight" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f6d365"/><stop offset="100%" stop-color="#fda085"/></linearGradient>
+                <linearGradient id="gradModerate" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f093fb"/><stop offset="100%" stop-color="#f5576c"/></linearGradient>
+                <linearGradient id="gradSevere" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f5576c"/><stop offset="100%" stop-color="#ff6b6b"/></linearGradient>
+            </defs></svg>
+
+            <div class="score-ring-wrap">
+                <div class="score-ring-bg"></div>
+                <div class="score-ring-fill">
+                    <svg viewBox="0 0 120 120">
+                        <circle class="ring-track" cx="60" cy="60" r="56"/>
+                        <circle th:class="'ring-' + ${assessment.level}" cx="60" cy="60" r="56" id="ringFill"/>
+                    </svg>
+                </div>
+                <div class="score-center">
+                    <span class="score-num" th:text="${assessment.totalScore}">0</span>
+                    <span class="score-unit">分</span>
+                </div>
+            </div>
+
+            <div th:class="'level-title level-' + ${assessment.level}">
+                <span th:if="${assessment.level == 'normal'}">心理状态良好</span>
+                <span th:if="${assessment.level == 'light'}">存在轻度心理困扰</span>
+                <span th:if="${assessment.level == 'moderate'}">存在中度心理问题</span>
+                <span th:if="${assessment.level == 'severe'}">存在重度心理问题</span>
+            </div>
+
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="label">问卷名称</div>
+                    <div class="value" th:text="${assessment.questionnaireTitle}">问卷</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">测评时间</div>
+                    <div class="value" th:text="${#dates.format(assessment.createTime, 'MM-dd HH:mm')}">时间</div>
+                </div>
+            </div>
+
+            <div class="level-desc" th:if="${assessment.level == 'normal'}">您的心理健康状况良好，各项指标均在正常范围内。请继续保持积极乐观的生活态度。</div>
+            <div class="level-desc" th:if="${assessment.level == 'light'}">您近期可能存在一些轻度的心理困扰。建议适当调整生活节奏，多参加社交活动和体育锻炼。</div>
+            <div class="level-desc" th:if="${assessment.level == 'moderate'}">您的心理状态需要引起重视。建议尽快联系学校心理咨询中心进行专业的评估和辅导。</div>
+            <div class="level-desc" th:if="${assessment.level == 'severe'}">您的心理状态需要高度关注。请务必尽快联系学校心理咨询中心或拨打心理援助热线 12320-5。</div>
+        </div>
+
+        <div class="warning-banner card-enter" th:if="${assessment.isWarning == 1}" style="transition-delay:0.1s">
+            <h4>系统预警通知</h4>
+            <p>您的测评结果已触发系统预警，辅导员/心理老师将尽快与您联系。请保持手机畅通。</p>
+        </div>
+
+        <div class="analysis-card card-enter" style="transition-delay:0.15s">
+            <h3>评分分析</h3>
+            <div class="score-bar-item">
+                <div class="score-bar-label"><span>测评得分</span><span th:text="${assessment.totalScore} + ' 分'">0 分</span></div>
+                <div class="score-bar"><div th:class="'score-bar-fill fill-' + ${assessment.level}" th:attr="style='width:0%'" id="scoreBar"></div></div>
+            </div>
+            <div class="legend">
+                <span><i class="dot" style="background:#43e97b;"></i>正常</span>
+                <span><i class="dot" style="background:#f6d365;"></i>轻度</span>
+                <span><i class="dot" style="background:#f093fb;"></i>中度</span>
+                <span><i class="dot" style="background:#f5576c;"></i>重度</span>
+            </div>
+        </div>
+
+        <div class="analysis-card card-enter" style="transition-delay:0.2s">
+            <h3>健康建议</h3>
+            <ul class="suggestion-list">
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'normal'}">保持良好的生活习惯，每天保证7-8小时睡眠，坚持适量运动</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'normal'}">继续维护良好的人际关系，多与家人朋友沟通交流</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'light'}">尝试学习放松技巧，如深呼吸、冥想等</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'light'}">合理安排学习和休息时间，避免过度疲劳</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'light'}">积极参加校园活动，培养兴趣爱好</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'moderate'}">建议预约学校心理咨询中心进行专业评估</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'moderate'}">学习情绪管理技巧，记录每天的情绪变化</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'moderate'}">与信任的老师或朋友倾诉</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'severe'}">请立即联系学校心理咨询中心或拨打 12320-5</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'severe'}">告知家人或信任的老师您目前的状况</li>
+                <li th:class="'sug-' + ${assessment.level}" th:if="${assessment.level == 'severe'}">在专业人员指导下进行心理干预</li>
+            </ul>
+        </div>
+
+        <div class="actions card-enter" style="transition-delay:0.25s">
+            <a th:href="@{/student/assessment/history}" class="btn btn-outline">查看历史记录</a>
+            <a th:href="@{/student/questionnaire/list}" class="btn btn-primary">再次测评</a>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // 背景动效（简化版）
+        var canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d'),W,H;
+        function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+        resize();window.addEventListener('resize',resize);
+        var dots=[];for(var i=0;i<25;i++)dots.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+0.5,vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,o:Math.random()*0.4+0.1});
+        function drawBg(){ctx.clearRect(0,0,W,H);dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(220,225,255,'+d.o+')';ctx.fill();});for(var i=0;i<dots.length;i++)for(var j=i+1;j<dots.length;j++){var dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle='rgba(150,170,255,'+(0.08*(1-dist/100))+')';ctx.lineWidth=0.4;ctx.stroke();}}requestAnimationFrame(drawBg);}
+        drawBg();
+
+        // 卡片入场
+        document.querySelectorAll('.card-enter').forEach(function(c,i){
+            setTimeout(function(){c.classList.add('visible');},200+i*120);
+        });
+
+        // 用户菜单
+        window.toggleUserMenu=function(){document.getElementById('userMenu').classList.toggle('open');};
+        document.addEventListener('click',function(e){if(!document.getElementById('userMenu').contains(e.target))document.getElementById('userMenu').classList.remove('open');});
+
+        // 分数条动画
+        var scoreEl = document.querySelector('.score-num');
+        var score = scoreEl ? parseInt(scoreEl.textContent) || 0 : 0;
+        var maxScore = 50;
+        var pct = Math.min(score / maxScore * 100, 100);
+        setTimeout(function(){
+            var bar = document.getElementById('scoreBar');
+            if (bar) bar.style.width = pct + '%';
+            // 环形分数动画
+            var ring = document.getElementById('ringFill');
+            if (ring) { var circumference = 2 * Math.PI * 56; ring.setAttribute('stroke-dasharray', (score / maxScore * circumference) + ' ' + circumference); }
+        }, 800);
+    })();
+    </script>
+</body>
+</html>

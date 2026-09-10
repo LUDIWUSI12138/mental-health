@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mental.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.mental.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="realName" column="real_name"/>
+        <result property="gender" column="gender"/>
+        <result property="age" column="age"/>
+        <result property="college" column="college"/>
+        <result property="major" column="major"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="role" column="role"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="findByUsername" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM users ORDER BY create_time DESC
+    </select>
+
+    <select id="findByRole" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE role = #{role} ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, password, real_name, gender, age, college, major, phone, email, role)
+        VALUES (#{username}, #{password}, #{realName}, #{gender}, #{age}, #{college}, #{major}, #{phone}, #{email}, #{role})
+    </insert>
+
+    <update id="update">
+        UPDATE users
+        <set>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="age != null">age = #{age},</if>
+            <if test="college != null">college = #{college},</if>
+            <if test="major != null">major = #{major},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM users
+    </select>
+
+    <select id="countByRole" resultType="int">
+        SELECT COUNT(*) FROM users WHERE role = #{role}
+    </select>
+</mapper>

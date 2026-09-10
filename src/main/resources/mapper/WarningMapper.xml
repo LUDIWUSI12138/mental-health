@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mental.mapper.WarningMapper">
+
+    <resultMap id="BaseResultMap" type="com.mental.entity.Warning">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="assessmentId" column="assessment_id"/>
+        <result property="warningLevel" column="warning_level"/>
+        <result property="score" column="score"/>
+        <result property="message" column="message"/>
+        <result property="status" column="status"/>
+        <result property="handlerId" column="handler_id"/>
+        <result property="handleTime" column="handle_time"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <resultMap id="DetailResultMap" type="com.mental.entity.Warning" extends="BaseResultMap">
+        <result property="userName" column="user_name"/>
+        <result property="questionnaireTitle" column="questionnaire_title"/>
+    </resultMap>
+
+    <select id="findById" resultMap="DetailResultMap">
+        SELECT w.*, u.real_name AS user_name, q.title AS questionnaire_title
+        FROM warning w
+        LEFT JOIN users u ON w.user_id = u.id
+        LEFT JOIN assessment a ON w.assessment_id = a.id
+        LEFT JOIN questionnaire q ON a.questionnaire_id = q.id
+        WHERE w.id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="DetailResultMap">
+        SELECT w.*, u.real_name AS user_name, q.title AS questionnaire_title
+        FROM warning w
+        LEFT JOIN users u ON w.user_id = u.id
+        LEFT JOIN assessment a ON w.assessment_id = a.id
+        LEFT JOIN questionnaire q ON a.questionnaire_id = q.id
+        ORDER BY w.create_time DESC
+    </select>
+
+    <select id="findByUserId" resultMap="DetailResultMap">
+        SELECT w.*, u.real_name AS user_name, q.title AS questionnaire_title
+        FROM warning w
+        LEFT JOIN users u ON w.user_id = u.id
+        LEFT JOIN assessment a ON w.assessment_id = a.id
+        LEFT JOIN questionnaire q ON a.questionnaire_id = q.id
+        WHERE w.user_id = #{userId}
+        ORDER BY w.create_time DESC
+    </select>
+
+    <select id="findByStatus" resultMap="DetailResultMap">
+        SELECT w.*, u.real_name AS user_name, q.title AS questionnaire_title
+        FROM warning w
+        LEFT JOIN users u ON w.user_id = u.id
+        LEFT JOIN assessment a ON w.assessment_id = a.id
+        LEFT JOIN questionnaire q ON a.questionnaire_id = q.id
+        WHERE w.status = #{status}
+        ORDER BY w.create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO warning (user_id, assessment_id, warning_level, score, message, status)
+        VALUES (#{userId}, #{assessmentId}, #{warningLevel}, #{score}, #{message}, #{status})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE warning
+        SET status = #{status}, handler_id = #{handlerId}, handle_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM warning WHERE status = 'pending'
+    </select>
+
+    <delete id="deleteByAssessmentId">
+        DELETE FROM warning WHERE assessment_id = #{assessmentId}
+    </delete>
+</mapper>

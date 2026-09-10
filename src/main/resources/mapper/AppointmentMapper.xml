@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mental.mapper.AppointmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.mental.entity.Appointment">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="counselorName" column="counselor_name"/>
+        <result property="appointmentDate" column="appointment_date"/>
+        <result property="appointmentTime" column="appointment_time"/>
+        <result property="reason" column="reason"/>
+        <result property="status" column="status"/>
+        <result property="adminReply" column="admin_reply"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <resultMap id="DetailResultMap" type="com.mental.entity.Appointment" extends="BaseResultMap">
+        <result property="userName" column="user_name"/>
+    </resultMap>
+
+    <select id="findById" resultMap="DetailResultMap">
+        SELECT a.*, u.real_name AS user_name
+        FROM appointment a
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM appointment WHERE user_id = #{userId} ORDER BY create_time DESC
+    </select>
+
+    <select id="findAll" resultMap="DetailResultMap">
+        SELECT a.*, u.real_name AS user_name
+        FROM appointment a
+        LEFT JOIN users u ON a.user_id = u.id
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="findByStatus" resultMap="DetailResultMap">
+        SELECT a.*, u.real_name AS user_name
+        FROM appointment a
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.status = #{status}
+        ORDER BY a.create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO appointment (user_id, counselor_name, appointment_date, appointment_time, reason, status)
+        VALUES (#{userId}, #{counselorName}, #{appointmentDate}, #{appointmentTime}, #{reason}, #{status})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE appointment SET status = #{status}, admin_reply = #{adminReply} WHERE id = #{id}
+    </update>
+
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM appointment WHERE status = 'pending'
+    </select>
+</mapper>

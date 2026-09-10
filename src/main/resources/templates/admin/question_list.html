@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目管理 - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f2f5; }
+        .navbar { background: #2c3e50; padding: 15px 30px; }
+        .navbar .brand { color: white; font-size: 18px; font-weight: bold; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        h2 { margin-bottom: 20px; color: #333; }
+        .q-item { padding: 15px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; }
+        .q-item .q-num { color: #667eea; font-weight: bold; }
+        .q-item .q-text { margin-top: 5px; color: #333; }
+        .q-item .q-options { margin-top: 8px; color: #999; font-size: 13px; }
+        .btn { padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; color: white; border: none; cursor: pointer; }
+        .btn-back { background: #999; margin-right: 10px; }
+        .btn-primary { background: #667eea; }
+    </style>
+</head>
+<body>
+    <nav class="navbar"><span class="brand">管理后台</span></nav>
+    <div class="container">
+        <h2 th:text="'题目管理 - ' + ${questionnaire.title}">题目管理</h2>
+        <div class="card">
+            <div th:if="${#lists.isEmpty(questions)}" style="color:#999; padding:20px;">暂无题目，请通过数据库手动添加</div>
+            <div class="q-item" th:each="q, iter : ${questions}">
+                <div class="q-num">第 <span th:text="${iter.index + 1}">1</span> 题</div>
+                <div class="q-text" th:text="${q.content}">题目内容</div>
+                <div class="q-options" th:text="'选项：' + ${q.options}">选项</div>
+            </div>
+        </div>
+        <a th:href="@{/admin/questionnaire/list}" class="btn btn-back">返回问卷列表</a>
+    </div>
+</body>
+</html>

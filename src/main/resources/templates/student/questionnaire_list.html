@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测评中心 - 心理健康测评系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #0e0e1a; min-height: 100vh; overflow-x: hidden; color: #e0e0e0; }
+
+        /* ===== 背景动效层 ===== */
+        .bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+
+        /* ===== 导航栏 ===== */
+        .navbar { background: rgba(20,20,35,0.85); backdrop-filter: blur(20px); padding: 0 30px; height: 64px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .navbar .brand { font-size: 17px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .navbar .brand .icon { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-links { display: flex; align-items: center; gap: 6px; }
+        .nav-links a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 14px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: #fff; background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)); }
+
+        /* 用户下拉菜单 */
+        .user-menu { position: relative; }
+        .user-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .user-trigger:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); }
+        .user-trigger .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 600; }
+        .user-trigger .name { font-size: 14px; color: rgba(255,255,255,0.8); }
+        .user-trigger .arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+        .user-menu.open .arrow { transform: rotate(180deg); }
+        .user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: rgba(30,30,50,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .user-menu.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .user-dropdown a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 10px; font-size: 14px; transition: all 0.2s; }
+        .user-dropdown a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .user-dropdown a .icon { font-size: 16px; width: 20px; text-align: center; }
+        .user-dropdown .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 12px; }
+        .user-dropdown a.logout { color: #f5576c; }
+        .user-dropdown a.logout:hover { background: rgba(245,87,108,0.1); color: #f5576c; }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+
+        /* ===== 页面标题 ===== */
+        .page-header { margin-bottom: 40px; text-align: center; }
+        .page-header .deco-line { width: 60px; height: 3px; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 2px; margin: 0 auto 20px; }
+        .page-header h2 { font-size: 32px; color: #fff; font-weight: 300; letter-spacing: 4px; }
+        .page-header p { color: rgba(255,255,255,0.4); margin-top: 10px; font-size: 14px; letter-spacing: 1px; }
+
+        /* ===== 问卷卡片 ===== */
+        .q-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 36px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; }
+        .q-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(102,126,234,0.12) 0%, transparent 60%); opacity: 0; transition: opacity 0.4s; }
+        .q-card:hover::before { opacity: 1; }
+        .q-card:hover { border-color: rgba(102,126,234,0.4); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(102,126,234,0.15); }
+        .q-info { flex: 1; position: relative; z-index: 1; }
+        .q-info h3 { font-size: 22px; color: #fff; margin-bottom: 12px; font-weight: 500; }
+        .q-info p { color: rgba(255,255,255,0.45); font-size: 14px; line-height: 1.8; }
+        .q-meta { display: flex; gap: 12px; margin-top: 16px; }
+        .q-meta span { font-size: 12px; color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.06); padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.06); }
+        .btn-start { padding: 14px 36px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 15px; cursor: pointer; text-decoration: none; font-weight: 600; position: relative; z-index: 1; overflow: hidden; transition: all 0.3s; letter-spacing: 1px; }
+        .btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.6s; }
+        .btn-start:hover::before { left: 100%; }
+        .btn-start:hover { box-shadow: 0 8px 30px rgba(102,126,234,0.5); transform: translateY(-2px); }
+
+        /* ===== 卡片入场动画 ===== */
+        .q-card { opacity: 0; transform: translateY(40px); }
+        .q-card.visible { opacity: 1; transform: translateY(0); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+    </style>
+</head>
+<body>
+    <canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+    <nav class="navbar">
+        <div class="brand"><div class="icon">&#129504;</div>心理健康测评系统</div>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">首页</a>
+            <a th:href="@{/student/questionnaire/list}" class="active">测评中心</a>
+            <a th:href="@{/student/assessment/history}">测评记录</a>
+            <a th:href="@{/student/article/list}">知识园地</a>
+            <a th:href="@{/student/mood/list}">心情日记</a>
+            <a th:href="@{/student/appointment/list}">咨询预约</a>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <div class="user-trigger" onclick="toggleUserMenu()">
+                <div class="avatar" th:text="${session.user?.realName != null ? #strings.substring(session.user.realName, 0, 1) : '同'}">张</div>
+                <span class="name" th:text="${session.user?.realName ?: '同学'}">同学</span>
+                <span class="arrow">&#9662;</span>
+            </div>
+            <div class="user-dropdown">
+                <a th:href="@{/student/profile}"><span class="icon">&#9881;</span> 个人中心</a>
+                <div class="divider"></div>
+                <a th:href="@{/user/logout}" class="logout"><span class="icon">&#8592;</span> 退出登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="deco-line"></div>
+            <h2>测 评 中 心</h2>
+            <p>选择一份量表开始测评，了解您的心理健康状况</p>
+        </div>
+
+        <div class="q-card" th:each="q, iter : ${questionnaires}" th:attr="data-delay=${iter.index * 150}">
+            <div class="q-info">
+                <h3 th:text="${q.title}">问卷标题</h3>
+                <p th:text="${q.description}">问卷说明</p>
+                <div class="q-meta">
+                    <span>共 10 题</span>
+                    <span>约需 5-10 分钟</span>
+                    <span>评分制</span>
+                </div>
+            </div>
+            <a th:href="@{/student/assessment/start/{id}(id=${q.id})}" class="btn-start">开始测评 &#8594;</a>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // ========== 古典哲学风格背景 ==========
+        var canvas = document.getElementById('bgCanvas');
+        var ctx = canvas.getContext('2d');
+        var W, H;
+        function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // 流动墨线
+        var strokes = [];
+        function Stroke() {
+            this.points = [];
+            var startX = Math.random() * W;
+            var startY = Math.random() * H;
+            for (var i = 0; i < 6; i++) {
+                this.points.push({ x: startX + (Math.random()-0.5)*400, y: startY + (Math.random()-0.5)*400 });
+            }
+            this.progress = Math.random();
+            this.speed = 0.0003 + Math.random() * 0.0004;
+            this.maxOpacity = 0.08 + Math.random() * 0.07;
+            this.opacity = 0;
+            this.width = 0.8 + Math.random() * 0.8;
+        }
+        for (var i = 0; i < 8; i++) strokes.push(new Stroke());
+
+        // 旋转圆环
+        var rings = [];
+        function Ring(x, y, r) { this.x = x; this.y = y; this.r = r; this.angle = Math.random() * Math.PI * 2; this.speed = (Math.random()-0.5) * 0.003; this.opacity = 0.08 + Math.random()*0.04; }
+        rings.push(new Ring(W*0.15, H*0.3, 120));
+        rings.push(new Ring(W*0.85, H*0.7, 180));
+        rings.push(new Ring(W*0.5, H*0.15, 90));
+        rings.push(new Ring(W*0.7, H*0.5, 150));
+
+        // 浮动粒子
+        var dots = [];
+        for (var i = 0; i < 40; i++) {
+            dots.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.5+0.5, vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3, o: Math.random()*0.5+0.1 });
+        }
+
+        var time = 0;
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            time += 0.01;
+
+            // 绘制流动墨线（缓慢流动 + 渐隐渐现）
+            strokes.forEach(function(s) {
+                s.progress += s.speed;
+                if (s.progress > 1) { s.progress = 0; var startX = Math.random()*W; var startY = Math.random()*H; s.points = []; for(var i=0;i<6;i++) s.points.push({x:startX+(Math.random()-0.5)*400,y:startY+(Math.random()-0.5)*400}); }
+                var p = s.progress;
+                var fade = p < 0.2 ? p / 0.2 : (p > 0.8 ? (1 - p) / 0.2 : 1);
+                s.opacity = s.maxOpacity * fade;
+                ctx.beginPath();
+                ctx.moveTo(s.points[0].x, s.points[0].y);
+                for (var i = 1; i < s.points.length - 1; i++) {
+                    var xc = (s.points[i].x + s.points[i+1].x) / 2;
+                    var yc = (s.points[i].y + s.points[i+1].y) / 2;
+                    ctx.quadraticCurveTo(s.points[i].x, s.points[i].y, xc, yc);
+                }
+                ctx.strokeStyle = 'rgba(180, 190, 255, ' + s.opacity + ')';
+                ctx.lineWidth = s.width;
+                ctx.stroke();
+            });
+
+            // 绘制旋转圆环（太极/禅圆风格）
+            rings.forEach(function(ring) {
+                ring.angle += ring.speed;
+                ctx.save();
+                ctx.translate(ring.x, ring.y);
+                ctx.rotate(ring.angle);
+                // 外圈
+                ctx.beginPath();
+                ctx.arc(0, 0, ring.r, 0, Math.PI * 1.5);
+                ctx.strokeStyle = 'rgba(180, 160, 255, ' + ring.opacity + ')';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+                // 内圈
+                ctx.beginPath();
+                ctx.arc(0, 0, ring.r * 0.6, Math.PI * 0.5, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(150, 180, 255, ' + (ring.opacity * 0.8) + ')';
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+                // 装饰点
+                var dotAngle = ring.angle * 2;
+                ctx.beginPath();
+                ctx.arc(Math.cos(dotAngle) * ring.r, Math.sin(dotAngle) * ring.r, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(200, 210, 255, ' + (ring.opacity * 2.5) + ')';
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // 绘制浮动粒子
+            dots.forEach(function(d) {
+                d.x += d.vx; d.y += d.vy;
+                if (d.x < 0) d.x = W; if (d.x > W) d.x = 0;
+                if (d.y < 0) d.y = H; if (d.y > H) d.y = 0;
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(220, 225, 255, ' + d.o + ')';
+                ctx.fill();
+            });
+
+            // 连线
+            for (var i = 0; i < dots.length; i++) {
+                for (var j = i+1; j < dots.length; j++) {
+                    var dx = dots[i].x - dots[j].x;
+                    var dy = dots[i].y - dots[j].y;
+                    var dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(dots[i].x, dots[i].y);
+                        ctx.lineTo(dots[j].x, dots[j].y);
+                        ctx.strokeStyle = 'rgba(150,170,255,' + (0.08 * (1-dist/120)) + ')';
+                        ctx.lineWidth = 0.4;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        // ========== 卡片鼠标跟随光效 ==========
+        document.querySelectorAll('.q-card').forEach(function(card) {
+            card.addEventListener('mousemove', function(e) {
+                var rect = this.getBoundingClientRect();
+                var x = ((e.clientX - rect.left) / rect.width * 100);
+                var y = ((e.clientY - rect.top) / rect.height * 100);
+                this.style.setProperty('--mx', x + '%');
+                this.style.setProperty('--my', y + '%');
+            });
+        });
+
+        // ========== 卡片入场动画 ==========
+        var cards = document.querySelectorAll('.q-card');
+        cards.forEach(function(card, i) {
+            var delay = parseInt(card.getAttribute('data-delay')) || i * 150;
+            setTimeout(function() { card.classList.add('visible'); }, 300 + delay);
+        });
+
+        // 用户菜单
+        window.toggleUserMenu=function(){document.getElementById('userMenu').classList.toggle('open');};
+        document.addEventListener('click',function(e){if(!document.getElementById('userMenu').contains(e.target))document.getElementById('userMenu').classList.remove('open');});
+    })();
+    </script>
+</body>
+</html>

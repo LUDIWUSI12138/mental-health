@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章管理 - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a1a2e; padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .brand { color: white; font-size: 18px; font-weight: bold; }
+        .navbar a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 14px; }
+        .layout { display: flex; min-height: calc(100vh - 56px); }
+        .sidebar { width: 240px; background: white; box-shadow: 2px 0 12px rgba(0,0,0,0.05); padding: 25px 0; }
+        .sidebar a { display: flex; align-items: center; padding: 13px 28px; color: #666; text-decoration: none; font-size: 14px; transition: all 0.2s; gap: 10px; }
+        .sidebar a:hover { background: #f5f5ff; color: #667eea; }
+        .sidebar a.active { background: linear-gradient(90deg, #f0edff, transparent); color: #667eea; font-weight: 600; border-right: 3px solid #667eea; }
+        .sidebar .section-title { padding: 10px 28px; font-size: 12px; color: #bbb; margin-top: 15px; }
+        .main { flex: 1; padding: 30px; }
+        .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .page-header h2 { font-size: 24px; color: #333; }
+        .btn-add { padding: 10px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        th { background: #f8f9fa; padding: 14px 16px; text-align: left; font-weight: 600; color: #555; font-size: 13px; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        tr:hover { background: #fafafa; }
+        .action-btn { padding: 5px 14px; border-radius: 6px; font-size: 12px; text-decoration: none; margin-right: 6px; }
+        .btn-edit { background: #e8f0fe; color: #667eea; }
+        .btn-edit:hover { background: #667eea; color: white; }
+        .btn-del { background: #fde8e8; color: #e74c3c; }
+        .btn-del:hover { background: #e74c3c; color: white; }
+        .tag { padding: 3px 10px; border-radius: 12px; font-size: 12px; }
+        .tag-cat { background: #f0edff; color: #667eea; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <span class="brand">&#129504; 管理后台</span>
+        <div><a th:href="@{/user/logout}">退出</a></div>
+    </nav>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">数据总览</div>
+            <a th:href="@{/admin/dashboard}">&#128200; 数据概览</a>
+            <div class="section-title">用户管理</div>
+            <a th:href="@{/admin/user/list}">&#128100; 学生管理</a>
+            <div class="section-title">测评管理</div>
+            <a th:href="@{/admin/questionnaire/list}">&#128221; 问卷管理</a>
+            <a th:href="@{/admin/assessment/list}">&#128203; 测评记录</a>
+            <div class="section-title">内容管理</div>
+            <a th:href="@{/admin/article/list}" class="active">&#128214; 文章管理</a>
+            <a th:href="@{/admin/announcement/list}">&#128227; 公告管理</a>
+            <div class="section-title">服务中心</div>
+            <a th:href="@{/admin/appointment/list}">&#128197; 预约管理</a>
+            <a th:href="@{/admin/mood/list}">&#128151; 心情记录</a>
+            <div class="section-title">预警中心</div>
+            <a th:href="@{/admin/warning/list}">&#128680; 预警管理</a>
+        </div>
+        <div class="main">
+            <div class="page-header">
+                <h2>文章管理</h2>
+                <a th:href="@{/admin/article/add}" class="btn-add">+ 新增文章</a>
+            </div>
+            <table>
+                <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>浏览量</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                    <tr th:each="a : ${articles}">
+                        <td th:text="${a.id}"></td>
+                        <td><strong th:text="${a.title}"></strong></td>
+                        <td><span class="tag tag-cat" th:text="${a.category}">分类</span></td>
+                        <td th:text="${a.viewCount}">0</td>
+                        <td><span th:if="${a.status == 1}" style="color:#27ae60;">上架</span><span th:unless="${a.status == 1}" style="color:#999;">下架</span></td>
+                        <td>
+                            <a th:href="@{/admin/article/edit/{id}(id=${a.id})}" class="action-btn btn-edit">编辑</a>
+                            <a th:href="@{/admin/article/delete/{id}(id=${a.id})}" class="action-btn btn-del" onclick="return confirm('确定删除？')">删除</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

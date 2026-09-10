@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心情记录 - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f2f5; }
+        .navbar { background: #1a1a2e; padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .brand { color: white; font-size: 18px; font-weight: bold; }
+        .navbar a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 14px; }
+        .layout { display: flex; min-height: calc(100vh - 56px); }
+        .sidebar { width: 240px; background: white; box-shadow: 2px 0 12px rgba(0,0,0,0.05); padding: 25px 0; }
+        .sidebar a { display: flex; align-items: center; padding: 13px 28px; color: #666; text-decoration: none; font-size: 14px; transition: all 0.2s; gap: 10px; }
+        .sidebar a:hover { background: #f5f5ff; color: #667eea; }
+        .sidebar a.active { background: linear-gradient(90deg, #f0edff, transparent); color: #667eea; font-weight: 600; border-right: 3px solid #667eea; }
+        .sidebar .section-title { padding: 10px 28px; font-size: 12px; color: #bbb; margin-top: 15px; }
+        .main { flex: 1; padding: 30px; }
+        .page-header { margin-bottom: 25px; }
+        .page-header h2 { font-size: 24px; color: #333; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        th { background: #f8f9fa; padding: 14px 16px; text-align: left; font-weight: 600; color: #555; font-size: 13px; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        tr:hover { background: #fafafa; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <span class="brand">&#129504; 管理后台</span>
+        <div><a th:href="@{/user/logout}">退出</a></div>
+    </nav>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">数据总览</div>
+            <a th:href="@{/admin/dashboard}">&#128200; 数据概览</a>
+            <div class="section-title">用户管理</div>
+            <a th:href="@{/admin/user/list}">&#128100; 学生管理</a>
+            <div class="section-title">测评管理</div>
+            <a th:href="@{/admin/questionnaire/list}">&#128221; 问卷管理</a>
+            <a th:href="@{/admin/assessment/list}">&#128203; 测评记录</a>
+            <div class="section-title">内容管理</div>
+            <a th:href="@{/admin/article/list}">&#128214; 文章管理</a>
+            <a th:href="@{/admin/announcement/list}">&#128227; 公告管理</a>
+            <div class="section-title">服务中心</div>
+            <a th:href="@{/admin/appointment/list}">&#128197; 预约管理</a>
+            <a th:href="@{/admin/mood/list}" class="active">&#128151; 心情记录</a>
+            <div class="section-title">预警中心</div>
+            <a th:href="@{/admin/warning/list}">&#128680; 预警管理</a>
+        </div>
+        <div class="main">
+            <div class="page-header"><h2>心情记录</h2></div>
+            <table>
+                <thead><tr><th>学生</th><th>心情</th><th>分值</th><th>内容</th><th>时间</th></tr></thead>
+                <tbody>
+                    <tr th:each="d : ${diaries}">
+                        <td><strong th:text="${d.userName}">学生</strong></td>
+                        <td style="font-size:24px;" th:text="${d.moodEmoji}">&#128522;</td>
+                        <td th:text="${d.moodScore} + '/5'">3/5</td>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" th:text="${d.content}">内容</td>
+                        <td th:text="${#dates.format(d.createTime, 'yyyy-MM-dd HH:mm')}">时间</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

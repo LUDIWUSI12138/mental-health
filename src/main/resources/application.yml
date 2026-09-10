@@ -1,0 +1,20 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/mental_health}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+mybatis:
+  mapper-locations: classpath:/mapper/*.xml
+  type-aliases-package: com.mental.entity
+  configuration:
+    map-underscore-to-camel-case: true

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 高校心理健康测评系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; min-height: 100vh; display: flex; background: #0a0a1a; overflow: hidden; }
+
+        /* 粒子画布 */
+        #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+
+        /* 鼠标跟随光效 */
+        .cursor-glow { position: fixed; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(102,126,234,0.15) 0%, transparent 70%); pointer-events: none; z-index: 1; transform: translate(-50%, -50%); transition: opacity 0.3s; }
+
+        /* 左侧介绍面板 */
+        .left-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; padding: 60px; position: relative; z-index: 2; }
+        .left-panel .brand-icon { width: 100px; height: 100px; border-radius: 24px; background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 30px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .left-panel h1 { font-size: 38px; margin-bottom: 16px; background: linear-gradient(135deg, #fff, #c5cae9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+        .left-panel .subtitle { font-size: 16px; opacity: 0.7; line-height: 1.8; text-align: center; max-width: 420px; }
+        .features { display: flex; gap: 30px; margin-top: 50px; }
+        .feature-item { text-align: center; }
+        .feature-item .feat-icon { width: 56px; height: 56px; border-radius: 14px; background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 10px; transition: all 0.3s; }
+        .feature-item:hover .feat-icon { background: rgba(102,126,234,0.3); transform: translateY(-3px); }
+        .feature-item span { font-size: 13px; opacity: 0.6; }
+
+        /* 右侧登录面板 - 玻璃拟态 */
+        .right-panel { width: 500px; display: flex; align-items: center; justify-content: center; padding: 60px; position: relative; z-index: 2; }
+        .glass-card { width: 100%; max-width: 380px; background: rgba(255,255,255,0.06); backdrop-filter: blur(20px); border-radius: 24px; padding: 45px 40px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .glass-card h2 { font-size: 28px; color: white; margin-bottom: 6px; }
+        .glass-card .sub { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 35px; }
+        .form-group { margin-bottom: 22px; position: relative; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: rgba(255,255,255,0.7); font-size: 13px; letter-spacing: 0.5px; }
+        .form-group .input-wrap { position: relative; }
+        .form-group .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; opacity: 0.5; }
+        .form-group input { width: 100%; padding: 14px 16px 14px 46px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; font-size: 15px; color: white; transition: all 0.3s; }
+        .form-group input::placeholder { color: rgba(255,255,255,0.3); }
+        .form-group input:focus { outline: none; border-color: rgba(102,126,234,0.6); background: rgba(255,255,255,0.1); box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+        .btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: 600; transition: all 0.3s; position: relative; overflow: hidden; }
+        .btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s; }
+        .btn:hover::before { left: 100%; }
+        .btn:hover { box-shadow: 0 6px 25px rgba(102,126,234,0.5); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .links { text-align: center; margin-top: 25px; }
+        .links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .links a:hover { color: #667eea; }
+        .error { color: #ff6b6b; text-align: center; margin-bottom: 18px; padding: 12px; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.2); border-radius: 10px; font-size: 14px; backdrop-filter: blur(10px); }
+
+        /* 浮动装饰元素 */
+        .float-decor { position: absolute; border-radius: 50%; opacity: 0.1; animation: floatAround 20s linear infinite; }
+        .decor-1 { width: 200px; height: 200px; background: #667eea; top: 10%; left: 5%; animation-delay: 0s; }
+        .decor-2 { width: 150px; height: 150px; background: #764ba2; bottom: 15%; left: 15%; animation-delay: -5s; }
+        .decor-3 { width: 100px; height: 100px; background: #f093fb; top: 20%; right: 55%; animation-delay: -10s; }
+        @keyframes floatAround { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(30px, -30px) rotate(90deg); } 50% { transform: translate(-20px, 20px) rotate(180deg); } 75% { transform: translate(20px, 30px) rotate(270deg); } 100% { transform: translate(0, 0) rotate(360deg); } }
+
+        @media (max-width: 900px) {
+            .left-panel { display: none; }
+            .right-panel { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子画布 -->
+    <canvas id="particles"></canvas>
+
+    <!-- 鼠标跟随光效 -->
+    <div class="cursor-glow" id="cursorGlow"></div>
+
+    <!-- 浮动装饰 -->
+    <div class="float-decor decor-1"></div>
+    <div class="float-decor decor-2"></div>
+    <div class="float-decor decor-3"></div>
+
+    <!-- 左侧介绍 -->
+    <div class="left-panel">
+        <div class="brand-icon">&#129504;</div>
+        <h1>高校心理健康测评系统</h1>
+        <p class="subtitle">关注心理健康，从了解自己开始。专业的心理测评量表，智能预警与干预，守护每一位学生的心理健康。</p>
+        <div class="features">
+            <div class="feature-item">
+                <div class="feat-icon">&#128221;</div>
+                <span>专业测评</span>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">&#128680;</div>
+                <span>智能预警</span>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">&#128161;</div>
+                <span>心理知识</span>
+            </div>
+            <div class="feature-item">
+                <div class="feat-icon">&#128197;</div>
+                <span>心情日记</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧登录 -->
+    <div class="right-panel">
+        <div class="glass-card">
+            <h2>欢迎登录</h2>
+            <p class="sub">请使用您的账号登录系统</p>
+
+            <div th:if="${error}" class="error" th:text="${error}"></div>
+
+            <form th:action="@{/user/login}" method="post">
+                <div class="form-group">
+                    <label>用户名 / 学号</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">&#128100;</span>
+                        <input type="text" name="username" required placeholder="请输入用户名或学号">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">&#128272;</span>
+                        <input type="password" name="password" required placeholder="请输入密码">
+                    </div>
+                </div>
+                <button type="submit" class="btn">登 录</button>
+            </form>
+            <div class="links">
+                还没有账号？<a th:href="@{/user/register}">立即注册</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // ========== 粒子动画 ==========
+        var canvas = document.getElementById('particles');
+        var ctx = canvas.getContext('2d');
+        var particles = [];
+        var particleCount = 80;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        function Particle() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.5;
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.radius = Math.random() * 2 + 1;
+            this.opacity = Math.random() * 0.5 + 0.1;
+        }
+
+        for (var i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(102, 126, 234, ' + p.opacity + ')';
+                ctx.fill();
+
+                // 连线
+                for (var j = i + 1; j < particles.length; j++) {
+                    var p2 = particles[j];
+                    var dx = p.x - p2.x;
+                    var dy = p.y - p2.y;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = 'rgba(102, 126, 234, ' + (0.08 * (1 - dist / 150)) + ')';
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+
+                // 移动
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+            }
+            requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+
+        // ========== 鼠标跟随光效 ==========
+        var glow = document.getElementById('cursorGlow');
+        document.addEventListener('mousemove', function(e) {
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+        });
+
+        // ========== 输入框聚焦动画 ==========
+        var inputs = document.querySelectorAll('.form-group input');
+        inputs.forEach(function(input) {
+            input.addEventListener('focus', function() {
+                this.closest('.form-group').querySelector('label').style.color = 'rgba(102,126,234,0.9)';
+                this.closest('.form-group').querySelector('.input-icon').style.opacity = '1';
+            });
+            input.addEventListener('blur', function() {
+                this.closest('.form-group').querySelector('label').style.color = 'rgba(255,255,255,0.7)';
+                this.closest('.form-group').querySelector('.input-icon').style.opacity = '0.5';
+            });
+        });
+
+        // ========== 卡片入场动画 ==========
+        var card = document.querySelector('.glass-card');
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+        setTimeout(function() {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 200);
+
+        // 左侧面板入场
+        var leftPanel = document.querySelector('.left-panel');
+        leftPanel.style.opacity = '0';
+        leftPanel.style.transform = 'translateX(-30px)';
+        leftPanel.style.transition = 'all 1s cubic-bezier(0.16, 1, 0.3, 1)';
+        setTimeout(function() {
+            leftPanel.style.opacity = '1';
+            leftPanel.style.transform = 'translateX(0)';
+        }, 400);
+    })();
+    </script>
+</body>
+</html>

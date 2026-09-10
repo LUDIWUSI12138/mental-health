@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${article.title} + ' - 心理知识园地'">文章详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #0e0e1a; min-height: 100vh; overflow-x: hidden; color: #e0e0e0; }
+        .bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .navbar { background: rgba(20,20,35,0.85); backdrop-filter: blur(20px); padding: 0 30px; height: 64px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .navbar .brand { font-size: 17px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .navbar .brand .icon { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .navbar a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 14px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
+        .navbar a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 14px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: #fff; background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)); }
+
+        /* 用户下拉菜单 */
+        .user-menu { position: relative; }
+        .user-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .user-trigger:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); }
+        .user-trigger .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 600; }
+        .user-trigger .name { font-size: 14px; color: rgba(255,255,255,0.8); }
+        .user-trigger .arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+        .user-menu.open .arrow { transform: rotate(180deg); }
+        .user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: rgba(30,30,50,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .user-menu.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .user-dropdown a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 10px; font-size: 14px; transition: all 0.2s; }
+        .user-dropdown a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .user-dropdown a .icon { font-size: 16px; width: 20px; text-align: center; }
+        .user-dropdown .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 12px; }
+        .user-dropdown a.logout { color: #f5576c; }
+        .user-dropdown a.logout:hover { background: rgba(245,87,108,0.1); color: #f5576c; }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+        .article-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 45px; position: relative; overflow: hidden; }
+        .article-card::before { content: ''; position: absolute; top: -50%; right: -20%; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(102,126,234,0.06) 0%, transparent 70%); }
+        .article-card .cat-tag { display: inline-block; padding: 5px 16px; border-radius: 14px; font-size: 12px; background: rgba(102,126,234,0.12); color: #667eea; border: 1px solid rgba(102,126,234,0.15); margin-bottom: 20px; position: relative; z-index: 1; }
+        .article-card h1 { font-size: 28px; color: #fff; margin-bottom: 16px; line-height: 1.5; font-weight: 500; position: relative; z-index: 1; }
+        .article-card .meta { color: rgba(255,255,255,0.35); font-size: 13px; margin-bottom: 30px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 1; }
+        .article-card .content { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 2.2; white-space: pre-wrap; position: relative; z-index: 1; }
+        .back-link { display: inline-block; margin-top: 24px; padding: 12px 28px; background: rgba(102,126,234,0.15); color: #667eea; border: 1px solid rgba(102,126,234,0.2); border-radius: 12px; text-decoration: none; font-size: 14px; transition: all 0.3s; }
+        .back-link:hover { background: rgba(102,126,234,0.25); border-color: rgba(102,126,234,0.4); color: #fff; transform: translateY(-2px); }
+
+        .card-enter { opacity: 0; transform: translateY(30px); }
+        .card-enter.visible { animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+    <nav class="navbar">
+        <div class="brand"><div class="icon">&#129504;</div>心理健康测评系统</div>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">首页</a>
+            <a th:href="@{/student/questionnaire/list}">测评中心</a>
+            <a th:href="@{/student/assessment/history}">测评记录</a>
+            <a th:href="@{/student/article/list}">知识园地</a>
+            <a th:href="@{/student/mood/list}">心情日记</a>
+            <a th:href="@{/student/appointment/list}">咨询预约</a>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <div class="user-trigger" onclick="toggleUserMenu()">
+                <div class="avatar" th:text="${session.user?.realName != null ? #strings.substring(session.user.realName, 0, 1) : '同'}">张</div>
+                <span class="name" th:text="${session.user?.realName ?: '同学'}">同学</span>
+                <span class="arrow">&#9662;</span>
+            </div>
+            <div class="user-dropdown">
+                <a th:href="@{/student/profile}"><span class="icon">&#9881;</span> 个人中心</a>
+                <div class="divider"></div>
+                <a th:href="@{/user/logout}" class="logout"><span class="icon">&#8592;</span> 退出登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="article-card card-enter">
+            <span class="cat-tag" th:text="${article.category}">分类</span>
+            <h1 th:text="${article.title}">文章标题</h1>
+            <div class="meta">
+                <span th:text="${article.viewCount} + ' 次阅读'">0 次阅读</span>
+                &nbsp;&middot;&nbsp;
+                <span th:text="${#dates.format(article.createTime, 'yyyy-MM-dd HH:mm')}">时间</span>
+            </div>
+            <div class="content" th:text="${article.content}">文章内容</div>
+        </div>
+        <a th:href="@{/student/article/list}" class="back-link card-enter">&#8592; 返回列表</a>
+    </div>
+
+    <script>
+    (function() {
+        var canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d'),W,H;
+        function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+        resize();window.addEventListener('resize',resize);
+
+        var dots=[];for(var i=0;i<25;i++)dots.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+0.5,vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,o:Math.random()*0.4+0.1});
+        function drawBg(){ctx.clearRect(0,0,W,H);dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(220,225,255,'+d.o+')';ctx.fill();});for(var i=0;i<dots.length;i++)for(var j=i+1;j<dots.length;j++){var dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle='rgba(150,170,255,'+(0.08*(1-dist/100))+')';ctx.lineWidth=0.4;ctx.stroke();}}requestAnimationFrame(drawBg);}
+        drawBg();
+
+        document.querySelectorAll('.card-enter').forEach(function(c,i){
+            setTimeout(function(){c.classList.add('visible');},200+i*150);
+        });
+
+        // 用户菜单
+        window.toggleUserMenu=function(){document.getElementById('userMenu').classList.toggle('open');};
+        document.addEventListener('click',function(e){if(!document.getElementById('userMenu').contains(e.target))document.getElementById('userMenu').classList.remove('open');});
+    })();
+    </script>
+</body>
+</html>

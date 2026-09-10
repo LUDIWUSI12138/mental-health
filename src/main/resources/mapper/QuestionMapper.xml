@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mental.mapper.QuestionMapper">
+
+    <resultMap id="BaseResultMap" type="com.mental.entity.Question">
+        <id property="id" column="id"/>
+        <result property="questionnaireId" column="questionnaire_id"/>
+        <result property="content" column="content"/>
+        <result property="type" column="type"/>
+        <result property="options" column="options"/>
+        <result property="sortOrder" column="sort_order"/>
+    </resultMap>
+
+    <select id="findByQuestionnaireId" resultMap="BaseResultMap">
+        SELECT * FROM question WHERE questionnaire_id = #{questionnaireId} ORDER BY sort_order
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM question WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO question (questionnaire_id, content, type, options, sort_order)
+        VALUES (#{questionnaireId}, #{content}, #{type}, #{options}, #{sortOrder})
+    </insert>
+
+    <update id="update">
+        UPDATE question
+        SET content = #{content}, type = #{type}, options = #{options}, sort_order = #{sortOrder}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM question WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByQuestionnaireId">
+        DELETE FROM question WHERE questionnaire_id = #{questionnaireId}
+    </delete>
+</mapper>

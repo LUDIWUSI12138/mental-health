@@ -1,0 +1,21 @@
+# Render 免费 Web Service 部署配置
+# 使用前：先创建免费 PostgreSQL（如 Neon），把连接信息填到下方环境变量
+services:
+  - type: web
+    name: mental-health
+    runtime: java
+    plan: free
+    region: singapore
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/mental-health-1.0.0.jar
+    healthCheckPath: /user/login
+    envVars:
+      - key: JAVA_VERSION
+        value: 17
+      # 改成 jdbc:postgresql:// 开头的完整地址（Neon/Aiven 等免费库）
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false

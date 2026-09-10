@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增问卷 - 管理后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f2f5; }
+        .navbar { background: #2c3e50; padding: 15px 30px; }
+        .navbar .brand { color: white; font-size: 18px; font-weight: bold; }
+        .container { max-width: 600px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .form-group textarea { height: 100px; resize: vertical; }
+        .btn { padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
+        .btn-back { background: #999; margin-right: 10px; text-decoration: none; padding: 12px 30px; color: white; border-radius: 6px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <nav class="navbar"><span class="brand">管理后台</span></nav>
+    <div class="container">
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">新增问卷</h2>
+            <form th:action="@{/admin/questionnaire/save}" method="post">
+                <div class="form-group">
+                    <label>问卷标题</label>
+                    <input type="text" name="title" required placeholder="如：SCL-90心理健康自评量表">
+                </div>
+                <div class="form-group">
+                    <label>问卷说明</label>
+                    <textarea name="description" placeholder="请输入问卷的说明文字"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>总分</label>
+                    <input type="number" name="totalScore" value="0">
+                </div>
+                <input type="hidden" name="status" value="1">
+                <a th:href="@{/admin/questionnaire/list}" class="btn-back">返回</a>
+                <button type="submit" class="btn">保存</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心理知识园地 - 心理健康测评系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #0e0e1a; min-height: 100vh; overflow-x: hidden; color: #e0e0e0; }
+        .bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .navbar { background: rgba(20,20,35,0.85); backdrop-filter: blur(20px); padding: 0 30px; height: 64px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .navbar .brand { font-size: 17px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .navbar .brand .icon { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 14px; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-links a.active { color: #fff; background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)); }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+        .page-header { margin-bottom: 40px; text-align: center; }
+        .page-header .deco-line { width: 60px; height: 3px; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 2px; margin: 0 auto 20px; }
+        .page-header h2 { font-size: 32px; color: #fff; font-weight: 300; letter-spacing: 4px; }
+        .page-header p { color: rgba(255,255,255,0.4); margin-top: 10px; font-size: 14px; letter-spacing: 1px; }
+
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 32px; flex-wrap: wrap; justify-content: center; }
+        .filter-btn { padding: 8px 22px; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer; transition: all 0.3s; text-decoration: none; }
+        .filter-btn:hover { border-color: rgba(102,126,234,0.3); color: #fff; background: rgba(102,126,234,0.1); }
+        .filter-btn.active { background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3)); color: #fff; border-color: rgba(102,126,234,0.4); }
+
+        .article-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .article-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); text-decoration: none; color: #e0e0e0; position: relative; }
+        .article-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(102,126,234,0.12) 0%, transparent 60%); opacity: 0; transition: opacity 0.4s; z-index: 0; }
+        .article-card:hover::before { opacity: 1; }
+        .article-card:hover { border-color: rgba(102,126,234,0.4); transform: translateY(-6px); box-shadow: 0 20px 60px rgba(102,126,234,0.12); }
+        .article-card .cover { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; z-index: 1; }
+        .article-card .cover.c1 { background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(197,202,233,0.1)); }
+        .article-card .cover.c2 { background: linear-gradient(135deg, rgba(246,211,101,0.15), rgba(255,234,167,0.1)); }
+        .article-card .cover.c3 { background: linear-gradient(135deg, rgba(67,233,123,0.15), rgba(168,230,207,0.1)); }
+        .article-card .cover.c4 { background: linear-gradient(135deg, rgba(240,147,251,0.15), rgba(245,87,108,0.1)); }
+        .article-card .cover.c5 { background: linear-gradient(135deg, rgba(56,249,215,0.15), rgba(178,235,242,0.1)); }
+        .article-card .info { padding: 22px; position: relative; z-index: 1; }
+        .article-card .cat-tag { display: inline-block; padding: 4px 14px; border-radius: 14px; font-size: 12px; background: rgba(102,126,234,0.12); color: #667eea; border: 1px solid rgba(102,126,234,0.15); margin-bottom: 12px; }
+        .article-card .title { font-size: 16px; font-weight: 500; margin-bottom: 8px; line-height: 1.5; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .article-card .summary { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 14px; }
+        .article-card .meta { font-size: 12px; color: rgba(255,255,255,0.3); display: flex; justify-content: space-between; }
+
+        .empty { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.3); }
+        .empty .icon { font-size: 60px; margin-bottom: 20px; opacity: 0.3; }
+
+        .card-enter { opacity: 0; transform: translateY(40px); }
+        .card-enter.visible { animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* 用户下拉菜单 */
+        .user-menu { position: relative; }
+        .user-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1); }
+        .user-trigger:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); }
+        .user-trigger .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 600; }
+        .user-trigger .name { font-size: 14px; color: rgba(255,255,255,0.8); }
+        .user-trigger .arrow { font-size: 10px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+        .user-menu.open .arrow { transform: rotate(180deg); }
+        .user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 200px; background: rgba(30,30,50,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .user-menu.open .user-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .user-dropdown a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 10px; font-size: 14px; transition: all 0.2s; }
+        .user-dropdown a:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .user-dropdown a .icon { font-size: 16px; width: 20px; text-align: center; }
+        .user-dropdown .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 12px; }
+        .user-dropdown a.logout { color: #f5576c; }
+        .user-dropdown a.logout:hover { background: rgba(245,87,108,0.1); color: #f5576c; }
+
+        @media (max-width: 768px) { .article-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <canvas class="bg-canvas" id="bgCanvas"></canvas>
+
+    <nav class="navbar">
+        <div class="brand"><div class="icon">&#129504;</div>心理健康测评系统</div>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">首页</a>
+            <a th:href="@{/student/questionnaire/list}">测评中心</a>
+            <a th:href="@{/student/assessment/history}">测评记录</a>
+            <a th:href="@{/student/article/list}" class="active">知识园地</a>
+            <a th:href="@{/student/mood/list}">心情日记</a>
+            <a th:href="@{/student/appointment/list}">咨询预约</a>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <div class="user-trigger" onclick="toggleUserMenu()">
+                <div class="avatar" th:text="${session.user?.realName != null ? #strings.substring(session.user.realName, 0, 1) : '同'}">张</div>
+                <span class="name" th:text="${session.user?.realName ?: '同学'}">同学</span>
+                <span class="arrow">&#9662;</span>
+            </div>
+            <div class="user-dropdown">
+                <a th:href="@{/student/profile}"><span class="icon">&#9881;</span> 个人中心</a>
+                <div class="divider"></div>
+                <a th:href="@{/user/logout}" class="logout"><span class="icon">&#8592;</span> 退出登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="deco-line"></div>
+            <h2>心 理 知 识 园 地</h2>
+            <p>了解心理健康知识，学会关爱自己</p>
+        </div>
+
+        <div class="filter-bar">
+            <a th:href="@{/student/article/list}" th:class="'filter-btn card-enter' + (${currentCategory == null} ? ' active' : '')">全部</a>
+            <a th:href="@{/student/article/list(category='情绪管理')}" th:class="'filter-btn card-enter' + (${currentCategory == '情绪管理'} ? ' active' : '')">情绪管理</a>
+            <a th:href="@{/student/article/list(category='压力应对')}" th:class="'filter-btn card-enter' + (${currentCategory == '压力应对'} ? ' active' : '')">压力应对</a>
+            <a th:href="@{/student/article/list(category='人际关系')}" th:class="'filter-btn card-enter' + (${currentCategory == '人际关系'} ? ' active' : '')">人际关系</a>
+            <a th:href="@{/student/article/list(category='自我认知')}" th:class="'filter-btn card-enter' + (${currentCategory == '自我认知'} ? ' active' : '')">自我认知</a>
+            <a th:href="@{/student/article/list(category='睡眠健康')}" th:class="'filter-btn card-enter' + (${currentCategory == '睡眠健康'} ? ' active' : '')">睡眠健康</a>
+        </div>
+
+        <div class="article-grid">
+            <div th:each="a, iter : ${articles}" class="article-card card-enter" th:with="coverClass='c' + ((${iter.index} % 5) + 1)" th:attr="data-delay=${iter.index * 120}">
+                <a th:href="@{/student/article/detail/{id}(id=${a.id})}" style="text-decoration:none;color:inherit;">
+                    <div th:class="'cover ' + ${coverClass}">
+                        <span th:if="${a.category == '情绪管理'}">&#128151;</span>
+                        <span th:if="${a.category == '压力应对'}">&#128170;</span>
+                        <span th:if="${a.category == '人际关系'}">&#129309;</span>
+                        <span th:if="${a.category == '自我认知'}">&#128161;</span>
+                        <span th:if="${a.category == '睡眠健康'}">&#128164;</span>
+                    </div>
+                    <div class="info">
+                        <span class="cat-tag" th:text="${a.category}">分类</span>
+                        <div class="title" th:text="${a.title}">标题</div>
+                        <div class="summary" th:text="${a.summary}">摘要</div>
+                        <div class="meta">
+                            <span th:text="${a.viewCount} + ' 次阅读'">0 次阅读</span>
+                            <span th:text="${#dates.format(a.createTime, 'yyyy-MM-dd')}">时间</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(articles)}" class="empty">
+            <div class="icon">&#128214;</div>
+            <p>暂无文章</p>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var canvas=document.getElementById('bgCanvas'),ctx=canvas.getContext('2d'),W,H;
+        function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+        resize();window.addEventListener('resize',resize);
+
+        var strokes=[];
+        function Stroke(){this.points=[];var sx=Math.random()*W,sy=Math.random()*H;for(var i=0;i<6;i++)this.points.push({x:sx+(Math.random()-0.5)*400,y:sy+(Math.random()-0.5)*400});this.progress=Math.random();this.speed=0.0003+Math.random()*0.0004;this.maxOpacity=0.08+Math.random()*0.07;this.opacity=0;this.width=0.8+Math.random()*0.8;}
+        for(var i=0;i<6;i++)strokes.push(new Stroke());
+
+        var rings=[];
+        rings.push({x:W*0.12,y:H*0.3,r:110,a:0,s:0.002,o:0.08});
+        rings.push({x:W*0.88,y:H*0.7,r:150,a:Math.PI,s:0.003,o:0.07});
+        rings.push({x:W*0.5,y:H*0.12,r:80,a:Math.PI*0.5,s:-0.002,o:0.06});
+
+        var dots=[];for(var i=0;i<35;i++)dots.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+0.5,vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,o:Math.random()*0.4+0.1});
+
+        function drawBg(){ctx.clearRect(0,0,W,H);
+            strokes.forEach(function(s){s.progress+=s.speed;if(s.progress>1){s.progress=0;var sx=Math.random()*W,sy=Math.random()*H;s.points=[];for(var i=0;i<6;i++)s.points.push({x:sx+(Math.random()-0.5)*400,y:sy+(Math.random()-0.5)*400});}var p=s.progress;var fade=p<0.2?p/0.2:(p>0.8?(1-p)/0.2:1);s.opacity=s.maxOpacity*fade;ctx.beginPath();ctx.moveTo(s.points[0].x,s.points[0].y);for(var i=1;i<s.points.length-1;i++){var xc=(s.points[i].x+s.points[i+1].x)/2,yc=(s.points[i].y+s.points[i+1].y)/2;ctx.quadraticCurveTo(s.points[i].x,s.points[i].y,xc,yc);}ctx.strokeStyle='rgba(180,190,255,'+s.opacity+')';ctx.lineWidth=s.width;ctx.stroke();});
+            rings.forEach(function(r){r.a+=r.s;ctx.save();ctx.translate(r.x,r.y);ctx.rotate(r.a);ctx.beginPath();ctx.arc(0,0,r.r,0,Math.PI*1.5);ctx.strokeStyle='rgba(180,160,255,'+r.o+')';ctx.lineWidth=1.2;ctx.stroke();ctx.beginPath();ctx.arc(0,0,r.r*0.6,Math.PI*0.5,Math.PI*2);ctx.strokeStyle='rgba(150,180,255,'+(r.o*0.8)+')';ctx.lineWidth=0.8;ctx.stroke();ctx.restore();});
+            dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(220,225,255,'+d.o+')';ctx.fill();});
+            for(var i=0;i<dots.length;i++)for(var j=i+1;j<dots.length;j++){var dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle='rgba(150,170,255,'+(0.08*(1-dist/100))+')';ctx.lineWidth=0.4;ctx.stroke();}}
+            requestAnimationFrame(drawBg);}
+        drawBg();
+
+        document.querySelectorAll('.article-card').forEach(function(card){
+            card.addEventListener('mousemove',function(e){var rect=this.getBoundingClientRect();this.style.setProperty('--mx',((e.clientX-rect.left)/rect.width*100)+'%');this.style.setProperty('--my',((e.clientY-rect.top)/rect.height*100)+'%');});
+        });
+
+        document.querySelectorAll('.card-enter').forEach(function(c){
+            var delay=parseInt(c.getAttribute('data-delay'))||0;
+            setTimeout(function(){c.classList.add('visible');},300+delay);
+        });
+
+        // 用户菜单
+        window.toggleUserMenu=function(){document.getElementById('userMenu').classList.toggle('open');};
+        document.addEventListener('click',function(e){if(!document.getElementById('userMenu').contains(e.target))document.getElementById('userMenu').classList.remove('open');});
+    })();
+    </script>
+</body>
+</html>
